@@ -19,6 +19,19 @@ var (
 	gp  = &Vertex{1, 2}
 )
 
+func Pic(dx, dy int) [][]uint8 {
+	pic := make([][]uint8, dy)
+
+	for i := range pic {
+		pic[i] = make([]uint8, dx)
+		for j := range pic[i] {
+			pic[i][j] = uint8(i * j)
+		}
+	}
+
+	return pic
+}
+
 func main() {
 	i, j := 42, 2701
 
@@ -165,7 +178,20 @@ func main() {
 	xxpNew := &xx2
 	fmt.Println(xxpNew == xxp)
 
-	// Read to 15
+	var pow = []int{1, 2, 4, 8, 16, 32, 64, 128}
+	for i, v := range pow {
+		fmt.Printf("2**%d = %d\n", i, v)
+	}
+
+	pow2 := make([]int, 10)
+	for i := range pow {
+		pow2[i] = 1 << uint(i)
+	}
+	for _, v := range pow {
+		fmt.Printf("%d\n", v)
+	}
+
+	// Read to 18
 }
 
 func printSlice(s []int) {

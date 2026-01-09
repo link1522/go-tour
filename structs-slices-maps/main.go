@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"math"
 	"strings"
 )
 
@@ -30,6 +31,30 @@ func Pic(dx, dy int) [][]uint8 {
 	}
 
 	return pic
+}
+
+type Vertex2 struct {
+	Lat, Long float64
+}
+
+var m map[string]Vertex2
+
+func WordCount(s string) map[string]int {
+	words := strings.Fields(s)
+	wordsMap := make(map[string]int)
+	for _, v := range words {
+		_, ok := wordsMap[v]
+		if !ok {
+			// 不判斷也可以，因為預設就是 0
+			wordsMap[v] = 0
+		}
+		wordsMap[v]++
+	}
+	return wordsMap
+}
+
+func compute(fn func(float64, float64) float64) float64 {
+	return fn(3, 4)
 }
 
 func main() {
@@ -191,9 +216,76 @@ func main() {
 		fmt.Printf("%d\n", v)
 	}
 
-	// Read to 18
+	m = make(map[string]Vertex2)
+	m["Bell Labs"] = Vertex2{
+		40.68433, -74.39967,
+	}
+	fmt.Println(m["Bell Labs"])
+
+	var m2 = map[string]Vertex2{
+		"Bell Labs": Vertex2{
+			40.68433, -74.39967,
+		},
+		"Google": Vertex2{
+			37.42202, -122.08408,
+		},
+	}
+	fmt.Println(m2)
+
+	// 可以省略型別
+	var m3 = map[string]Vertex2{
+		"Bell Labs": {40.68433, -74.39967},
+		"Google":    {37.42202, -122.08408},
+	}
+	fmt.Println(m3)
+
+	m4 := make(map[string]int)
+	m4["answer"] = 42
+	fmt.Println(m4["answer"])
+	m4["answer"] = 48
+	fmt.Println(m4["answer"])
+	delete(m4, "answer")
+	fmt.Println(m4["answer"])
+	vv, ok := m4["answer"]
+	fmt.Println("The value", vv, "Present?", ok)
+
+	hypot := func(x, y float64) float64 {
+		return math.Sqrt(x*x + y*y)
+	}
+	fmt.Println(hypot(5, 12))
+
+	fmt.Println(compute(hypot))
+	fmt.Println(compute(math.Pow))
+
+	pos, neg := adder(), adder()
+	for i := 0; i < 10; i++ {
+		fmt.Println(pos(i), neg(-2*i))
+	}
+
+	f := fibonacci()
+	for range 10 {
+		fmt.Println(f())
+	}
 }
 
 func printSlice(s []int) {
 	fmt.Printf("len=%d cap=%d %v\n", len(s), cap(s), s)
+}
+
+// closure
+func adder() func(int) int {
+	sum := 0
+	return func(x int) int {
+		sum += x
+		return sum
+	}
+}
+
+func fibonacci() func() int {
+	a, b := 0, 1
+	return func() int {
+		v := a
+		a, b = b, a+b
+		return v
+	}
 }

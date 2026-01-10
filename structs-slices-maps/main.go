@@ -80,7 +80,7 @@ func main() {
 
 	v2 := Vertex{7, 8}
 	v2p := &v2
-	// 可以簡化 (*v2p).X
+	// 簡化自 (*v2p).X
 	v2p.X = 1e9
 	fmt.Println(v2)
 

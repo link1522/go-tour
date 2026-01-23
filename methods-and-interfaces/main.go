@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"strconv"
+	"time"
 )
 
 type Vertex struct {
@@ -96,6 +97,36 @@ func (ip IPAddr) String() string {
 	return str
 }
 
+type MyError struct {
+	When time.Time
+	What string
+}
+
+func (e *MyError) Error() string {
+	return fmt.Sprintf("at %v, %s", e.When, e.What)
+}
+
+func run() error {
+	return &MyError{
+		time.Now(),
+		"it did't work",
+	}
+}
+
+type ErrNagtiveSqrt float64
+
+func (e ErrNagtiveSqrt) Error() string {
+	return fmt.Sprintf("cannot Sqrt negative number: %v", float64(e))
+}
+
+func exSqrt(x float64) (float64, error) {
+	if x < 0 {
+		return 0, ErrNagtiveSqrt(x)
+	}
+
+	return math.Sqrt(x), nil
+}
+
 func main() {
 	v := Vertex{3, 4}
 	fmt.Println(v.Abs())
@@ -178,7 +209,14 @@ func main() {
 	ip := IPAddr{1, 2, 3, 4}
 	fmt.Println(ip)
 
-	// Read to 18
+	if err := run(); err != nil {
+		fmt.Println(err)
+	}
+
+	fmt.Println(exSqrt(2))
+	fmt.Println(exSqrt(-2))
+
+	// Read to 20
 }
 
 func describe(i interface{}) {

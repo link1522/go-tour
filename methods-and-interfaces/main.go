@@ -2,8 +2,13 @@ package main
 
 import (
 	"fmt"
+	"image"
+	"image/color"
+	"io"
 	"math"
+	"os"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -127,6 +132,50 @@ func exSqrt(x float64) (float64, error) {
 	return math.Sqrt(x), nil
 }
 
+type MyReader struct{}
+
+func (reader MyReader) Read(p []byte) (int, error) {
+	for i := range p {
+		p[i] = 'A'
+	}
+	return len(p), nil
+}
+
+type rot13Reader struct {
+	r io.Reader
+}
+
+func (reader *rot13Reader) Read(p []byte) (int, error) {
+	n, err := reader.r.Read(p)
+	for i := 0; i < n; i++ {
+		b := p[i]
+		switch {
+		case b >= 'a' && b <= 'z':
+			p[i] = 'a' + (b-'a'+13)%26
+		case b >= 'A' && b <= 'Z':
+			p[i] = 'A' + (b-'A'+13)%26
+		}
+	}
+	return n, err
+}
+
+type Image struct {
+	w, h int
+}
+
+func (img Image) ColorModel() color.Model {
+	return color.RGBAModel
+}
+
+func (img Image) Bounds() image.Rectangle {
+	return image.Rect(0, 0, img.h, img.w)
+}
+
+func (img Image) At(x, y int) color.Color {
+	v := uint8((x + y) / 2)
+	return color.RGBA{v, v, 255, 255}
+}
+
 func main() {
 	v := Vertex{3, 4}
 	fmt.Println(v.Abs())
@@ -216,7 +265,24 @@ func main() {
 	fmt.Println(exSqrt(2))
 	fmt.Println(exSqrt(-2))
 
-	// Read to 20
+	r := strings.NewReader("Hello, Reader!")
+	b := make([]byte, 8)
+	for {
+		n, err := r.Read(b)
+		fmt.Printf("n = %v err = %v b = %v\n", n, err, b)
+		fmt.Printf("b[:n] = %q\n", b[:n])
+		if err == io.EOF {
+			break
+		}
+	}
+
+	s2 := strings.NewReader("Lbh penpxrq gur pbqr!")
+	r2 := rot13Reader{s2}
+	io.Copy(os.Stdout, &r2)
+
+	m := image.NewRGBA(image.Rect(0, 0, 100, 100))
+	fmt.Println(m.Bounds())
+	fmt.Println(m.At(0, 0).RGBA())
 }
 
 func describe(i interface{}) {

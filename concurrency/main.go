@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"sync"
 	"time"
 )
 
@@ -44,6 +45,69 @@ func fibonacci2(c, quit chan int) {
 	}
 }
 
+type Tree struct {
+	Left  *Tree
+	Value int
+	Right *Tree
+}
+
+func Walk(t *Tree, ch chan int) {
+	var walk func(n *Tree)
+	walk = func(n *Tree) {
+		if n == nil {
+			return
+		}
+		walk(n.Left)
+		ch <- n.Value
+		walk(n.Right)
+	}
+
+	walk(t)
+	close(ch)
+}
+
+func Same(t1, t2 *Tree) bool {
+	c1 := make(chan int)
+	c2 := make(chan int)
+
+	go Walk(t1, c1)
+	go Walk(t2, c2)
+
+	for {
+		v1, ok1 := <-c1
+		v2, ok2 := <-c2
+
+		if ok1 != ok2 {
+			return false
+		}
+
+		if !ok1 {
+			return true
+		}
+
+		if v1 != v2 {
+			return false
+		}
+	}
+}
+
+type SafeCounter struct {
+	mu sync.Mutex
+	v  map[string]int
+}
+
+func (c *SafeCounter) Inc(key string) {
+	c.mu.Lock()
+	c.v[key]++
+	c.mu.Unlock()
+}
+
+func (c *SafeCounter) Value(key string) int {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return c.v[key]
+}
+
 func main() {
 	go say("world")
 	say("hello")
@@ -79,6 +143,13 @@ func main() {
 	}()
 	fibonacci2(c3, quit)
 
+	sc := SafeCounter{v: make(map[string]int)}
+	for i := 0; i < 1000; i++ {
+		go sc.Inc("someKey")
+	}
+	time.Sleep(time.Second)
+	fmt.Println(sc.Value("someKey"))
+
 	start := time.Now()
 	tick := time.Tick(100 * time.Millisecond)
 	boom := time.After(500 * time.Millisecond)
@@ -94,9 +165,7 @@ func main() {
 			return
 		default:
 			fmt.Printf("[%6s]     .\n", elapsed())
-			time.Sleep(50 * time.Microsecond)
+			time.Sleep(50 * time.Millisecond)
 		}
 	}
-
-	// Read to 6
 }
